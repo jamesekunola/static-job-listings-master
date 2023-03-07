@@ -2,12 +2,10 @@ const searchBoxEl = document.querySelector(".filtered-categories");
 const jobContainerEl = document.querySelector(".jobs-container");
 const filterBox = document.querySelector(".filtered-jobs");
 const clearBtn = document.querySelector(".clear");
-let jobToFilter = [];
+let jobToFilter = JSON.parse(localStorage.getItem("storedJobs"));
 
 // event listener
-addEventListener("DOMContentLoaded", () => {
-  fetchData();
-});
+window.addEventListener("DOMContentLoaded", fetchData());
 
 // functions
 async function fetchData() {
@@ -18,9 +16,7 @@ async function fetchData() {
 
 function jobRequirements(job) {
   const selectedJob = [job.role, job.level, ...job.languages, ...job.tools];
-  return selectedJob
-    .map((item, index) => `<button data-id=${index}>${item}</button>`)
-    .join("");
+  return selectedJob.map((item) => `<button>${item}</button>`).join("");
 }
 
 function renderJobCard(job) {
@@ -59,24 +55,38 @@ function renderJobs(jobs) {
 }
 
 function displayJobsOnUi(jobs) {
-  renderJobs(jobs);
+  // if there is a stored jobs on the local storage render the job else render all jobs
+  if (jobToFilter) {
+    renderSearchBox();
+    renderFilteredJobs(jobs);
+  } else {
+    renderJobs(jobs);
+  }
 
+  // add a click event to jobs requirement button
   jobContainerEl.addEventListener("click", (e) => {
-    const filterBtn = e.target.closest("button[data-id]");
-    if (filterBtn) {
-      const selectedJob = filterBtn.innerText;
-      if (!jobToFilter.includes(selectedJob)) {
-        jobToFilter.push(selectedJob);
-        renderSearchBox();
-        renderFilteredJobs(jobs);
-      }
+    const filterBtn = e.target.closest("button");
+    const selectedJob = filterBtn.innerText;
+
+    if (!jobToFilter) {
+      jobToFilter = [];
+    }
+
+    if (filterBtn && !jobToFilter.includes(selectedJob)) {
+      jobToFilter.push(selectedJob);
+      localStorage.setItem("storedJobs", JSON.stringify(jobToFilter));
+      // jobToFilter = JSON.parse(localStorage.getItem("storedJobs"));
+      renderSearchBox();
+      renderFilteredJobs(jobs);
     }
   });
+
   searchBoxEl.addEventListener("click", (e) => {
     const removeBtn = e.target.closest("button[data-id]");
     if (removeBtn) {
       const index = removeBtn.dataset.id;
       jobToFilter.splice(index, 1);
+      localStorage.setItem("storedJobs", JSON.stringify(jobToFilter));
       renderSearchBox();
       renderFilteredJobs(jobs);
 
@@ -88,6 +98,7 @@ function displayJobsOnUi(jobs) {
 
   clearBtn.addEventListener("click", () => {
     jobToFilter = [];
+    localStorage.setItem("storedJobs", JSON.stringify(jobToFilter));
     searchBoxEl.innerHTML = "";
     filterBox.classList.remove("visible");
     renderJobs(jobs);
@@ -98,14 +109,16 @@ function renderSearchBox() {
   searchBoxEl.innerHTML = jobToFilter
     .map(
       (item, index) => `
-      <div class="flex option" data-id=${index}>
+      <div class="flex option">
         <p>${item}</p>
         <button data-id=${index}><img src="/images/icon-remove.svg" alt="remove"></button>
       </div>
     `
     )
     .join("");
-  filterBox.classList.add("visible");
+  if (jobToFilter.length !== 0) {
+    filterBox.classList.add("visible");
+  }
 }
 
 function renderFilteredJobs(jobs) {
