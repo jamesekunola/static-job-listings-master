@@ -5,7 +5,7 @@ const clearBtn = document.querySelector(".clear");
 let jobToFilter = JSON.parse(localStorage.getItem("storedJobs"));
 
 // event listener
-window.addEventListener("DOMContentLoaded", fetchData());
+window.addEventListener("DOMContentLoaded", fetchData);
 
 // functions
 async function fetchData() {
